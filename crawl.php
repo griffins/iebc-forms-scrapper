@@ -7,6 +7,21 @@ function dd($o)
     die(0);
 }
 
+function get_via_cache($url)
+{
+    $path = __DIR__ . '/.cache/' . sha1($url);
+    if (file_exists($path)) {
+        return file_get_contents($path);
+    } else {
+        $cache = file_get_contents($url);
+        if (!file_exists(__DIR__ . '/.cache/')) {
+            mkdir(__DIR__ . '/.cache/', 0777, true);
+        }
+        file_put_contents($path, $cache);
+        return $cache;
+    }
+}
+
 function curl($data)
 {
     $data = http_build_query($data);
@@ -50,16 +65,16 @@ foreach ($counties as $id => $county) {
     if ($id == "") {
         continue;
     }
-    $constituencies = json_decode(file_get_contents("https://forms.iebc.or.ke/constituency/$id"), true);
+    $constituencies = json_decode(get_via_cache("https://forms.iebc.or.ke/constituency/$id"), true);
     echo("Processing $county\r");
     foreach ($constituencies['constituency'] as $c_id => $constituency) {
         echo("Processing $county/$constituency\r");
-        $wards = json_decode(file_get_contents("https://forms.iebc.or.ke/wards/$c_id"), true);
+        $wards = json_decode(get_via_cache("https://forms.iebc.or.ke/wards/$c_id"), true);
         foreach ($wards['wards'] as $w_id => $ward) {
             echo("Processing $county/$constituency/$ward\r");
-            $centers = json_decode(file_get_contents("https://forms.iebc.or.ke/pollingcentre/$w_id"), true);
+            $centers = json_decode(get_via_cache("https://forms.iebc.or.ke/pollingcentre/$w_id"), true);
             foreach ($centers['polling_centre'] as $p_id => $centre) {
-                $stations = json_decode(file_get_contents("https://forms.iebc.or.ke/pollingstation/$p_id-$w_id"), true);
+                $stations = json_decode(get_via_cache("https://forms.iebc.or.ke/pollingstation/$p_id-$w_id"), true);
                 foreach ($stations['polling_station'] as $s_id => $station) {
                     $station .= " $s_id";
                     $name = "$county/$constituency/$ward/$centre";
@@ -72,7 +87,7 @@ foreach ($counties as $id => $county) {
                         $crawler->filter('#home > div > div > div:nth-child(6) > h4:nth-child(5) > a')->each(function ($node) use ($name, $station) {
                             save("forms/34A/$name", "https://forms.iebc.or.ke" . $node->attr('href'), "$station");
                         });
-                    }else{
+                    } else {
                         echo("Skipping $name/$station\n");
                     }
                 }
