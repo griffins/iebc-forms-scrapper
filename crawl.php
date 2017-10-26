@@ -59,13 +59,12 @@ foreach ($counties as $id => $county) {
             echo("Processing $county/$constituency/$ward\r");
             $centers = json_decode(file_get_contents("https://forms.iebc.or.ke/pollingcentre/$w_id"), true);
             foreach ($centers['polling_centre'] as $p_id => $centre) {
-                echo("Processing $county/$constituency/$ward/$centre\r");
                 $stations = json_decode(file_get_contents("https://forms.iebc.or.ke/pollingstation/$p_id-$w_id"), true);
                 foreach ($stations['polling_station'] as $s_id => $station) {
                     $station .= " $s_id";
                     $name = "$county/$constituency/$ward/$centre";
-                    echo("Processing $name/$station\n");
                     if (!file_exists("forms/34A/$name/$station.jpg")) {
+                        echo("Processing $name/$station\n");
                         $token = "8GcGUIauFdNFIk1KTq5VMwCOvXEx9Qav0An68lJU";
                         $html = curl(['county_id' => $id, 'const_id' => $c_id, 'ward_id' => $w_id, '_token' => $token, 'pcentre_id' => $p_id, 'pstation_id' => $s_id]);
                         $crawler = new \Symfony\Component\DomCrawler\Crawler();
@@ -73,6 +72,8 @@ foreach ($counties as $id => $county) {
                         $crawler->filter('#home > div > div > div:nth-child(6) > h4:nth-child(5) > a')->each(function ($node) use ($name, $station) {
                             save("forms/34A/$name", "https://forms.iebc.or.ke" . $node->attr('href'), "$station");
                         });
+                    }else{
+                        echo("Skipping $name/$station\n");
                     }
                 }
             }
