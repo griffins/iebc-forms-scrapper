@@ -65,13 +65,15 @@ foreach ($counties as $id => $county) {
                     $station .= " $s_id";
                     $name = "$county/$constituency/$ward/$centre";
                     echo("Processing $name/$station\n");
-                    $token = "8GcGUIauFdNFIk1KTq5VMwCOvXEx9Qav0An68lJU";
-                    $html = curl(['county_id' => $id, 'const_id' => $c_id, 'ward_id' => $w_id, '_token' => $token, 'pcentre_id' => $p_id, 'pstation_id' => $s_id]);
-                    $crawler = new \Symfony\Component\DomCrawler\Crawler();
-                    $crawler->addContent($html);
-                    $crawler->filter('#home > div > div > div:nth-child(6) > h4:nth-child(5) > a')->each(function ($node) use ($name, $station) {
-                        save("forms/$name", "https://forms.iebc.or.ke" . $node->attr('href'), "$station");
-                    });
+                    if (!file_exists("forms/34A/$name/$station.jpg")) {
+                        $token = "8GcGUIauFdNFIk1KTq5VMwCOvXEx9Qav0An68lJU";
+                        $html = curl(['county_id' => $id, 'const_id' => $c_id, 'ward_id' => $w_id, '_token' => $token, 'pcentre_id' => $p_id, 'pstation_id' => $s_id]);
+                        $crawler = new \Symfony\Component\DomCrawler\Crawler();
+                        $crawler->addContent($html);
+                        $crawler->filter('#home > div > div > div:nth-child(6) > h4:nth-child(5) > a')->each(function ($node) use ($name, $station) {
+                            save("forms/34A/$name", "https://forms.iebc.or.ke" . $node->attr('href'), "$station");
+                        });
+                    }
                 }
             }
         }
