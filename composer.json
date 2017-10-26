@@ -1,0 +1,6 @@
+{
+    "require": {
+        "fabpot/goutte": "^3.2",
+        "symfony/var-dumper": "^3.3"
+    }
+}
