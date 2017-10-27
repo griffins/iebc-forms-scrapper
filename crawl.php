@@ -93,7 +93,6 @@ foreach ($counties as $id => $county) {
                         $html = curl(['county_id' => $id, 'const_id' => $c_id, 'ward_id' => $w_id, '_token' => $token, 'pcentre_id' => $p_id, 'pstation_id' => $s_id], $cookies);
                         $crawler = new \Symfony\Component\DomCrawler\Crawler();
                         $crawler->addContent($html);
-                        echo $html;
                         $crawler->filter('#home > div > div > div:nth-child(6) > h4:nth-child(5) > a')->each(function ($node) use ($name, $station) {
                             echo "Found image: " . $node->attr('href') . "\n";
                             save("forms/34A/$name", "https://forms.iebc.or.ke" . $node->attr('href'), "$station");
