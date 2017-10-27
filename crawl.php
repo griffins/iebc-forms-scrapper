@@ -22,10 +22,10 @@ function get_via_cache($url)
     }
 }
 
-function curl($data)
+function curl($data, $cookie)
 {
     $data = http_build_query($data);
-    $core = "curl 'https://forms.iebc.or.ke/documents' -H 'origin: https://forms.iebc.or.ke' -H 'content-type: application/x-www-form-urlencoded' -H 'cookie:laravel_session=eyJpdiI6InZhaFhjcWMyYmJWVXpPZVlrYlB5dmc9PSIsInZhbHVlIjoiWGh3ZHB0MlpBaUx4WmZsc1JhRGFBckg2MXJWcHc4TDE5VjRKTTc5S1N1OFM3cWdDOHpMSFpoRHJ2THh3K0Zja3N5dXVsTmZjVGFHUmpPdlZ5cnJrREE9PSIsIm1hYyI6IjRlNzI3MTNjY2I4N2U2OTFhNmFiMDhiNDIxOTU4Mjc0NzJkOTIwZmNlNWRkNTBhZjI0YTZlNGI5MjNjODEzMjYifQ%3D%3D; AWSALB=DrH+sPiPbfTdjnK7IdXF8oJfWySwIZLM3aDmxswf/ulwG53W79VG5DB1hoE93Z0m6mgEg7Q/36dRiLxm8u+nmCfSenJ8NMpVh/yHKbNMZbJcb+h+9NJufzi1+Sl9' --data '$data' -s --compressed";
+    $core = "curl 'https://forms.iebc.or.ke/documents' -H 'origin: https://forms.iebc.or.ke' -H 'content-type: application/x-www-form-urlencoded' -H 'cookie: $cookie' --data '$data' -s --compressed";
     return shell_exec($core);
 }
 
@@ -43,14 +43,23 @@ function save($dir, $url, $name)
 
 use Goutte\Client;
 
-$client = new Client();
 $guzzle = new GuzzleHttp\Client(['http_errors' => false]);
+$jar = new \Symfony\Component\BrowserKit\CookieJar();
+$client = new Client([], null, $jar);
 
 echo "Loading base form...\r";
 $crawler = $client->request('GET', 'https://forms.iebc.or.ke');
+
+$cookies_ = $jar->allValues("https://forms.iebc.or.ke", true);
+$cookies = "";
+foreach ($cookies_ as $name => $cookie) {
+    $cookies .= $name . "=" . $cookie . ";";
+}
+
 echo "Loaded base form\r";
 
 $values = $crawler->selectButton('View')->form()['county_id']->availableOptionValues();
+$token = $crawler->selectButton('View')->form()['_token']->getValue();
 
 $counties_ = $crawler->filter('#county')->filter('option')->each(function ($node) {
     return $node->text();
@@ -81,11 +90,12 @@ foreach ($counties as $id => $county) {
                     $name = "$county/$constituency/$ward/$centre";
                     if (!file_exists("forms/34A/$name/$station.jpg")) {
                         echo("Processing $name/$station\n");
-                        $token = "8GcGUIauFdNFIk1KTq5VMwCOvXEx9Qav0An68lJU";
-                        $html = curl(['county_id' => $id, 'const_id' => $c_id, 'ward_id' => $w_id, '_token' => $token, 'pcentre_id' => $p_id, 'pstation_id' => $s_id]);
+                        $html = curl(['county_id' => $id, 'const_id' => $c_id, 'ward_id' => $w_id, '_token' => $token, 'pcentre_id' => $p_id, 'pstation_id' => $s_id], $cookies);
                         $crawler = new \Symfony\Component\DomCrawler\Crawler();
                         $crawler->addContent($html);
+                        echo $html;
                         $crawler->filter('#home > div > div > div:nth-child(6) > h4:nth-child(5) > a')->each(function ($node) use ($name, $station) {
+                            echo "Found image: " . $node->attr('href') . "\n";
                             save("forms/34A/$name", "https://forms.iebc.or.ke" . $node->attr('href'), "$station");
                         });
                     } else {
