@@ -36,6 +36,7 @@ function save($dir, $url, $name)
         if (!file_exists($dir)) {
             mkdir($dir, 0777, true);
         }
+        echo "Downloading file: $url\n";
         file_put_contents($path, file_get_contents($url));
     }
 }
