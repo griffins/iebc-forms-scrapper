@@ -36,7 +36,7 @@ function save($dir, $url, $name)
         if (!file_exists($dir)) {
             mkdir($dir, 0777, true);
         }
-        echo "Downloading file: $url\n";
+//        echo "Downloading file: $url\n";
         file_put_contents($path, file_get_contents($url));
     }
 }
@@ -94,7 +94,7 @@ foreach ($counties as $id => $county) {
                         $crawler = new \Symfony\Component\DomCrawler\Crawler();
                         $crawler->addContent($html);
                         $crawler->filter('#home > div > div > div:nth-child(6) > h4:nth-child(5) > a')->each(function ($node) use ($name, $station) {
-                            echo "Found image: " . $node->attr('href') . "\n";
+//                            echo "Found image: " . $node->attr('href') . "\n";
                             save("forms/34A/$name", "https://forms.iebc.or.ke" . $node->attr('href'), "$station");
                         });
                     } else {
